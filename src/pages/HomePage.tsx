@@ -109,7 +109,7 @@ const HomePage: React.FC = () => {
   return (
     <HomeContainer>
       <LeftPanel>
-        <SearchFilter onSearch={handleSearch} />
+        <SearchFilter onFilterChange={handleSearch} loading={loading} />
         <CampingList 
           campingSpots={campingSpots} 
           onSpotSelect={handleSpotSelect}
