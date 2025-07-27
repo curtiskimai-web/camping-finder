@@ -1,38 +1,22 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { SearchFilter as SearchFilterType } from '../types/camping';
 
 const FilterContainer = styled.div`
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
+  flex: 1;
 `;
 
 const FilterTitle = styled.h3`
   margin: 0 0 15px 0;
   color: #2c3e50;
-  font-size: 18px;
+  font-size: 16px;
 `;
 
 const FilterRow = styled.div`
   display: flex;
   gap: 15px;
-  margin-bottom: 15px;
   align-items: center;
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-`;
-
-const Label = styled.label`
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
+  justify-content: space-between;
+  flex-wrap: wrap;
 `;
 
 const Select = styled.select`
@@ -41,191 +25,248 @@ const Select = styled.select`
   border-radius: 4px;
   font-size: 14px;
   min-width: 120px;
-`;
-
-const Input = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  min-width: 200px;
-`;
-
-const Checkbox = styled.input`
-  margin-right: 8px;
-`;
-
-const SearchButton = styled.button`
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
   
-  &:hover {
-    background-color: #2980b9;
+  &:focus {
+    outline: none;
+    border-color: #3498db;
   }
 `;
 
-const ResetButton = styled.button`
-  background-color: #95a5a6;
+const Button = styled.button`
+  background: #3498db;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  margin-left: 10px;
   
   &:hover {
-    background-color: #7f8c8d;
+    background: #2980b9;
+  }
+  
+  &:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+  }
+`;
+
+const ResetButton = styled(Button)`
+  background: #95a5a6;
+  
+  &:hover {
+    background: #7f8c8d;
   }
 `;
 
 interface SearchFilterProps {
-  onSearch: (filter: SearchFilterType) => void;
+  onFilterChange: (filter: { doName?: string; sigunguName?: string }) => void;
+  loading: boolean;
+  availableDoList?: Array<{ value: string; label: string }>;
+  availableSigunguMap?: { [key: string]: Array<{ value: string; label: string }> };
 }
 
-const SearchFilter: React.FC<SearchFilterProps> = ({ onSearch }) => {
-  const [filter, setFilter] = useState<SearchFilterType>({
-    region: { province: '', city: '' },
-    facilities: [],
-    priceRange: 'all',
-    reservationAvailable: false,
-    keyword: ''
-  });
+const SearchFilter: React.FC<SearchFilterProps> = ({ 
+  onFilterChange, 
+  loading, 
+  availableDoList = [], 
+  availableSigunguMap = {} 
+}) => {
+  const [selectedDo, setSelectedDo] = useState<string>('');
+  const [selectedSigungu, setSelectedSigungu] = useState<string>('');
 
-  const provinces = [
-    '서울특별시', '부산광역시', '대구광역시', '인천광역시', 
-    '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
-    '경기도', '강원도', '충청북도', '충청남도', 
-    '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
-  ];
+  // 실제 데이터에서 추출한 도 목록 사용 (없으면 기본 목록 사용)
+  const doList = availableDoList.length > 0 
+    ? [{ value: '', label: '전체' }, ...availableDoList]
+    : [
+        { value: '', label: '전체' },
+        { value: '서울특별시', label: '서울특별시' },
+        { value: '부산광역시', label: '부산광역시' },
+        { value: '대구광역시', label: '대구광역시' },
+        { value: '인천광역시', label: '인천광역시' },
+        { value: '광주광역시', label: '광주광역시' },
+        { value: '대전광역시', label: '대전광역시' },
+        { value: '울산광역시', label: '울산광역시' },
+        { value: '세종특별자치시', label: '세종특별자치시' },
+        { value: '경기도', label: '경기도' },
+        { value: '강원도', label: '강원도' },
+        { value: '충청북도', label: '충청북도' },
+        { value: '충청남도', label: '충청남도' },
+        { value: '전라북도', label: '전라북도' },
+        { value: '전라남도', label: '전라남도' },
+        { value: '경상북도', label: '경상북도' },
+        { value: '경상남도', label: '경상남도' },
+        { value: '제주특별자치도', label: '제주특별자치도' }
+      ];
 
-  const cities = {
-    '경기도': ['수원시', '성남시', '의정부시', '안양시', '부천시', '광명시', '평택시', '동두천시', '안산시', '고양시', '과천시', '구리시', '남양주시', '오산시', '시흥시', '군포시', '의왕시', '하남시', '용인시', '파주시', '이천시', '안성시', '김포시', '화성시', '광주시', '여주시', '양평군', '고양군', '연천군', '가평군', '포천군'],
-    '강원도': ['춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시', '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군'],
-    '충청북도': ['청주시', '충주시', '제천시', '보은군', '옥천군', '영동군', '증평군', '진천군', '괴산군', '음성군', '단양군'],
-    '충청남도': ['천안시', '공주시', '보령시', '아산시', '서산시', '논산시', '계룡시', '당진시', '금산군', '부여군', '서천군', '청양군', '홍성군', '예산군', '태안군'],
-    '전라북도': ['전주시', '군산시', '익산시', '정읍시', '남원시', '김제시', '완주군', '진안군', '무주군', '장수군', '임실군', '순창군', '고창군', '부안군'],
-    '전라남도': ['목포시', '여수시', '순천시', '나주시', '광양시', '담양군', '곡성군', '구례군', '고흥군', '보성군', '화순군', '장흥군', '강진군', '해남군', '영암군', '무안군', '함평군', '영광군', '장성군', '완도군', '진도군', '신안군'],
-    '경상북도': ['포항시', '경주시', '김천시', '안동시', '구미시', '영주시', '영천시', '상주시', '문경시', '경산시', '군위군', '의성군', '청송군', '영양군', '영덕군', '청도군', '고령군', '성주군', '칠곡군', '예천군', '봉화군', '울진군', '울릉군'],
-    '경상남도': ['창원시', '진주시', '통영시', '사천시', '김해시', '밀양시', '거제시', '양산시', '의령군', '함안군', '창녕군', '고성군', '남해군', '하동군', '산청군', '함양군', '거창군', '합천군']
+  // 시/군 목록 (도 선택에 따라 동적으로 변경)
+  const getSigunguList = (doName: string) => {
+    // 실제 데이터에서 추출한 시군구 목록 사용
+    if (availableSigunguMap[doName]) {
+      return [{ value: '', label: '전체' }, ...availableSigunguMap[doName]];
+    }
+    
+    // 기본 시군구 목록 (실제 데이터가 없을 때)
+    const defaultSigunguMap: { [key: string]: Array<{ value: string; label: string }> } = {
+      '서울특별시': [
+        { value: '', label: '전체' },
+        { value: '강남구', label: '강남구' },
+        { value: '강동구', label: '강동구' },
+        { value: '강북구', label: '강북구' },
+        { value: '강서구', label: '강서구' },
+        { value: '관악구', label: '관악구' },
+        { value: '광진구', label: '광진구' },
+        { value: '구로구', label: '구로구' },
+        { value: '금천구', label: '금천구' },
+        { value: '노원구', label: '노원구' },
+        { value: '도봉구', label: '도봉구' },
+        { value: '동대문구', label: '동대문구' },
+        { value: '동작구', label: '동작구' },
+        { value: '마포구', label: '마포구' },
+        { value: '서대문구', label: '서대문구' },
+        { value: '서초구', label: '서초구' },
+        { value: '성동구', label: '성동구' },
+        { value: '성북구', label: '성북구' },
+        { value: '송파구', label: '송파구' },
+        { value: '양천구', label: '양천구' },
+        { value: '영등포구', label: '영등포구' },
+        { value: '용산구', label: '용산구' },
+        { value: '은평구', label: '은평구' },
+        { value: '종로구', label: '종로구' },
+        { value: '중구', label: '중구' },
+        { value: '중랑구', label: '중랑구' }
+      ],
+      '경기도': [
+        { value: '', label: '전체' },
+        { value: '수원시', label: '수원시' },
+        { value: '성남시', label: '성남시' },
+        { value: '의정부시', label: '의정부시' },
+        { value: '안양시', label: '안양시' },
+        { value: '부천시', label: '부천시' },
+        { value: '광명시', label: '광명시' },
+        { value: '평택시', label: '평택시' },
+        { value: '동두천시', label: '동두천시' },
+        { value: '안산시', label: '안산시' },
+        { value: '고양시', label: '고양시' },
+        { value: '과천시', label: '과천시' },
+        { value: '구리시', label: '구리시' },
+        { value: '남양주시', label: '남양주시' },
+        { value: '오산시', label: '오산시' },
+        { value: '시흥시', label: '시흥시' },
+        { value: '군포시', label: '군포시' },
+        { value: '의왕시', label: '의왕시' },
+        { value: '하남시', label: '하남시' },
+        { value: '용인시', label: '용인시' },
+        { value: '파주시', label: '파주시' },
+        { value: '이천시', label: '이천시' },
+        { value: '안성시', label: '안성시' },
+        { value: '김포시', label: '김포시' },
+        { value: '화성시', label: '화성시' },
+        { value: '광주시', label: '광주시' },
+        { value: '여주시', label: '여주시' },
+        { value: '양평군', label: '양평군' },
+        { value: '고양군', label: '고양군' },
+        { value: '연천군', label: '연천군' },
+        { value: '가평군', label: '가평군' },
+        { value: '포천군', label: '포천군' }
+      ],
+      '강원도': [
+        { value: '', label: '전체' },
+        { value: '춘천시', label: '춘천시' },
+        { value: '원주시', label: '원주시' },
+        { value: '강릉시', label: '강릉시' },
+        { value: '동해시', label: '동해시' },
+        { value: '태백시', label: '태백시' },
+        { value: '속초시', label: '속초시' },
+        { value: '삼척시', label: '삼척시' },
+        { value: '홍천군', label: '홍천군' },
+        { value: '횡성군', label: '횡성군' },
+        { value: '영월군', label: '영월군' },
+        { value: '평창군', label: '평창군' },
+        { value: '정선군', label: '정선군' },
+        { value: '철원군', label: '철원군' },
+        { value: '화천군', label: '화천군' },
+        { value: '양구군', label: '양구군' },
+        { value: '인제군', label: '인제군' },
+        { value: '고성군', label: '고성군' },
+        { value: '양양군', label: '양양군' }
+      ]
+    };
+
+    return defaultSigunguMap[doName] || [{ value: '', label: '전체' }];
   };
 
-  const handleProvinceChange = (province: string) => {
-    setFilter(prev => ({
-      ...prev,
-      region: { province, city: '' }
-    }));
-  };
-
-  const handleCityChange = (city: string) => {
-    setFilter(prev => ({
-      ...prev,
-      region: { ...prev.region, city }
-    }));
+  const handleDoChange = (doName: string) => {
+    setSelectedDo(doName);
+    setSelectedSigungu(''); // 시/군 초기화
+    console.log('도 변경:', doName);
+    
+    // 도 선택 시 자동으로 검색 실행
+    const filter: { doName?: string; sigunguName?: string } = {};
+    if (doName && doName !== '') filter.doName = doName;
+    onFilterChange(filter);
   };
 
   const handleSearch = () => {
-    onSearch(filter);
+    const filter: { doName?: string; sigunguName?: string } = {};
+    if (selectedDo) filter.doName = selectedDo;
+    if (selectedSigungu) filter.sigunguName = selectedSigungu;
+    
+    console.log('검색 필터:', filter);
+    onFilterChange(filter);
   };
 
   const handleReset = () => {
-    setFilter({
-      region: { province: '', city: '' },
-      facilities: [],
-      priceRange: 'all',
-      reservationAvailable: false,
-      keyword: ''
-    });
-    onSearch({
-      region: { province: '', city: '' },
-      facilities: [],
-      priceRange: 'all',
-      reservationAvailable: false,
-      keyword: ''
-    });
+    setSelectedDo('');
+    setSelectedSigungu('');
+    console.log('필터 초기화');
+    onFilterChange({});
   };
 
   return (
     <FilterContainer>
-      <FilterTitle>🔍 캠핑장 검색</FilterTitle>
-      
       <FilterRow>
-        <FilterGroup>
-          <Label>지역</Label>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          {loading && <span style={{ fontSize: '12px', color: '#7f8c8d' }}>
+            데이터 로딩 중...
+          </span>}
           <Select 
-            value={filter.region.province} 
-            onChange={(e) => handleProvinceChange(e.target.value)}
+            value={selectedDo} 
+            onChange={(e) => handleDoChange(e.target.value)}
+            disabled={loading}
           >
-            <option value="">전체</option>
-            {provinces.map(province => (
-              <option key={province} value={province}>{province}</option>
+            {doList.map(doItem => (
+              <option key={doItem.value} value={doItem.value}>
+                {doItem.label}
+              </option>
             ))}
           </Select>
-        </FilterGroup>
-        
-        {filter.region.province && cities[filter.region.province as keyof typeof cities] && (
-          <FilterGroup>
-            <Label>시/군/구</Label>
-            <Select 
-              value={filter.region.city} 
-              onChange={(e) => handleCityChange(e.target.value)}
-            >
-              <option value="">전체</option>
-              {cities[filter.region.province as keyof typeof cities].map(city => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </Select>
-          </FilterGroup>
-        )}
-      </FilterRow>
-
-      <FilterRow>
-        <FilterGroup>
-          <Label>검색어</Label>
-          <Input
-            type="text"
-            placeholder="캠핑장명을 입력하세요"
-            value={filter.keyword}
-            onChange={(e) => setFilter(prev => ({ ...prev, keyword: e.target.value }))}
-          />
-        </FilterGroup>
-      </FilterRow>
-
-      <FilterRow>
-        <FilterGroup>
-          <Label>가격</Label>
-          <Select
-            value={filter.priceRange}
-            onChange={(e) => setFilter(prev => ({ ...prev, priceRange: e.target.value as any }))}
+          
+          <Select 
+            value={selectedSigungu} 
+            onChange={(e) => {
+              const newSigungu = e.target.value;
+              setSelectedSigungu(newSigungu);
+              // 시/군 선택 시 자동으로 검색 실행
+              const filter: { doName?: string; sigunguName?: string } = {};
+              if (selectedDo && selectedDo !== '') filter.doName = selectedDo;
+              if (newSigungu && newSigungu !== '') filter.sigunguName = newSigungu;
+              console.log('시군구 변경 - 필터:', filter);
+              onFilterChange(filter);
+            }}
+            disabled={loading || !selectedDo}
           >
-            <option value="all">전체</option>
-            <option value="free">무료</option>
-            <option value="paid">유료</option>
+            {getSigunguList(selectedDo).map(sigunguItem => (
+              <option key={sigunguItem.value} value={sigunguItem.value}>
+                {sigunguItem.label}
+              </option>
+            ))}
           </Select>
-        </FilterGroup>
-        
-        <FilterGroup>
-          <Label>
-            <Checkbox
-              type="checkbox"
-              checked={filter.reservationAvailable}
-              onChange={(e) => setFilter(prev => ({ ...prev, reservationAvailable: e.target.checked }))}
-            />
-            예약 가능한 캠핑장만
-          </Label>
-        </FilterGroup>
-      </FilterRow>
-
-      <FilterRow>
-        <SearchButton onClick={handleSearch}>검색</SearchButton>
-        <ResetButton onClick={handleReset}>초기화</ResetButton>
+          
+          <ResetButton onClick={handleReset} disabled={loading}>
+            초기화
+          </ResetButton>
+        </div>
       </FilterRow>
     </FilterContainer>
   );

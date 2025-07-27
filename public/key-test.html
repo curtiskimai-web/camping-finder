@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 키 동작 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .key-display {
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 API 키 동작 테스트</h1>
+        
+        <div class="test-section">
+            <h3>📝 테스트할 API 키들</h3>
+            <div class="key-display">
+                <strong>인코딩된 키:</strong><br>
+                wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw%3D%3D
+            </div>
+            <div class="key-display">
+                <strong>디코딩된 키:</strong><br>
+                wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw==
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 1. 인코딩된 키로 테스트</h3>
+            <button onclick="testEncodedKey()">인코딩된 키로 API 호출</button>
+            <div id="encoded-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 2. 디코딩된 키로 테스트</h3>
+            <button onclick="testDecodedKey()">디코딩된 키로 API 호출</button>
+            <div id="decoded-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 3. URLSearchParams로 테스트</h3>
+            <button onclick="testWithURLSearchParams()">URLSearchParams로 API 호출</button>
+            <div id="urlparams-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 4. 직접 URL로 테스트</h3>
+            <button onclick="testDirectURL()">직접 URL로 API 호출</button>
+            <div id="direct-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 테스트 결과 요약</h3>
+            <div id="summary" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://apis.data.go.kr/B551011/GoCamping';
+        const ENCODED_KEY = 'wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw%3D%3D';
+        const DECODED_KEY = 'wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw==';
+        
+        let testResults = {};
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        async function testEncodedKey() {
+            console.log('=== 인코딩된 키로 테스트 시작 ===');
+            showResult('encoded-result', { status: '테스트 중...' }, false);
+            
+            try {
+                const params = new URLSearchParams({
+                    serviceKey: ENCODED_KEY,
+                    numOfRows: '5',
+                    pageNo: '1',
+                    MobileOS: 'ETC',
+                    MobileApp: 'CampingFinder',
+                    _type: 'json'
+                });
+
+                const url = `${API_BASE_URL}/basedList?${params}`;
+                console.log('요청 URL:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const result = {
+                    success: data.response?.header?.resultCode === '00',
+                    status: response.status,
+                    resultCode: data.response?.header?.resultCode,
+                    resultMsg: data.response?.header?.resultMsg,
+                    totalCount: data.response?.body?.totalCount,
+                    items: data.response?.body?.items?.item?.length || 0,
+                    rawData: data
+                };
+
+                testResults.encoded = result;
+                showResult('encoded-result', result, !result.success);
+                updateSummary();
+                
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack
+                };
+                testResults.encoded = result;
+                showResult('encoded-result', result, true);
+                updateSummary();
+            }
+        }
+
+        async function testDecodedKey() {
+            console.log('=== 디코딩된 키로 테스트 시작 ===');
+            showResult('decoded-result', { status: '테스트 중...' }, false);
+            
+            try {
+                const params = new URLSearchParams({
+                    serviceKey: DECODED_KEY,
+                    numOfRows: '5',
+                    pageNo: '1',
+                    MobileOS: 'ETC',
+                    MobileApp: 'CampingFinder',
+                    _type: 'json'
+                });
+
+                const url = `${API_BASE_URL}/basedList?${params}`;
+                console.log('요청 URL:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const result = {
+                    success: data.response?.header?.resultCode === '00',
+                    status: response.status,
+                    resultCode: data.response?.header?.resultCode,
+                    resultMsg: data.response?.header?.resultMsg,
+                    totalCount: data.response?.body?.totalCount,
+                    items: data.response?.body?.items?.item?.length || 0,
+                    rawData: data
+                };
+
+                testResults.decoded = result;
+                showResult('decoded-result', result, !result.success);
+                updateSummary();
+                
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack
+                };
+                testResults.decoded = result;
+                showResult('decoded-result', result, true);
+                updateSummary();
+            }
+        }
+
+        async function testWithURLSearchParams() {
+            console.log('=== URLSearchParams로 테스트 시작 ===');
+            showResult('urlparams-result', { status: '테스트 중...' }, false);
+            
+            try {
+                // URLSearchParams가 자동으로 인코딩을 처리하는지 테스트
+                const params = new URLSearchParams();
+                params.append('serviceKey', DECODED_KEY); // 디코딩된 키를 넣어서 자동 인코딩 테스트
+                params.append('numOfRows', '5');
+                params.append('pageNo', '1');
+                params.append('MobileOS', 'ETC');
+                params.append('MobileApp', 'CampingFinder');
+                params.append('_type', 'json');
+
+                const url = `${API_BASE_URL}/basedList?${params}`;
+                console.log('요청 URL:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const result = {
+                    success: data.response?.header?.resultCode === '00',
+                    status: response.status,
+                    resultCode: data.response?.header?.resultCode,
+                    resultMsg: data.response?.header?.resultMsg,
+                    totalCount: data.response?.body?.totalCount,
+                    items: data.response?.body?.items?.item?.length || 0,
+                    rawData: data
+                };
+
+                testResults.urlparams = result;
+                showResult('urlparams-result', result, !result.success);
+                updateSummary();
+                
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack
+                };
+                testResults.urlparams = result;
+                showResult('urlparams-result', result, true);
+                updateSummary();
+            }
+        }
+
+        async function testDirectURL() {
+            console.log('=== 직접 URL로 테스트 시작 ===');
+            showResult('direct-result', { status: '테스트 중...' }, false);
+            
+            try {
+                // 직접 URL을 만들어서 테스트
+                const url = `${API_BASE_URL}/basedList?serviceKey=${ENCODED_KEY}&numOfRows=5&pageNo=1&MobileOS=ETC&MobileApp=CampingFinder&_type=json`;
+                console.log('요청 URL:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const result = {
+                    success: data.response?.header?.resultCode === '00',
+                    status: response.status,
+                    resultCode: data.response?.header?.resultCode,
+                    resultMsg: data.response?.header?.resultMsg,
+                    totalCount: data.response?.body?.totalCount,
+                    items: data.response?.body?.items?.item?.length || 0,
+                    rawData: data
+                };
+
+                testResults.direct = result;
+                showResult('direct-result', result, !result.success);
+                updateSummary();
+                
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message,
+                    stack: error.stack
+                };
+                testResults.direct = result;
+                showResult('direct-result', result, true);
+                updateSummary();
+            }
+        }
+
+        function updateSummary() {
+            const summary = {
+                timestamp: new Date().toLocaleString(),
+                results: testResults,
+                recommendations: []
+            };
+
+            // 결과 분석
+            if (testResults.encoded?.success) {
+                summary.recommendations.push('✅ 인코딩된 키 사용 권장');
+            }
+            if (testResults.decoded?.success) {
+                summary.recommendations.push('✅ 디코딩된 키도 동작함');
+            }
+            if (testResults.urlparams?.success) {
+                summary.recommendations.push('✅ URLSearchParams 사용 권장');
+            }
+            if (testResults.direct?.success) {
+                summary.recommendations.push('✅ 직접 URL 방식도 동작함');
+            }
+
+            // 실패한 경우
+            if (!testResults.encoded?.success && !testResults.decoded?.success) {
+                summary.recommendations.push('❌ 모든 키 테스트 실패 - API 키 확인 필요');
+            }
+
+            showResult('summary', summary, false);
+        }
+
+        // 페이지 로드 시 자동으로 모든 테스트 실행
+        window.onload = function() {
+            console.log('페이지 로드됨 - 자동 테스트 시작');
+            setTimeout(() => {
+                testEncodedKey();
+                setTimeout(() => testDecodedKey(), 1000);
+                setTimeout(() => testWithURLSearchParams(), 2000);
+                setTimeout(() => testDirectURL(), 3000);
+            }, 500);
+        };
+    </script>
+</body>
+</html> 

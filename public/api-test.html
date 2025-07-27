@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캠핑장 API 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏕️ 캠핑장 API 테스트</h1>
+        
+        <div class="test-section">
+            <h3>🔑 API 키 설정</h3>
+            <p><strong>인코딩된 키 (권장):</strong></p>
+            <label for="apiKeyEncoded">공공데이터 포털 API 키 (인코딩):</label>
+            <input type="text" id="apiKeyEncoded" placeholder="인코딩된 API 키를 입력하세요 (예: ...%3D%3D)" style="margin-bottom: 10px;" oninput="autoConvertOnInput()">
+            
+            <p><strong>디코딩된 키 (참고용):</strong></p>
+            <label for="apiKeyDecoded">공공데이터 포털 API 키 (디코딩):</label>
+            <input type="text" id="apiKeyDecoded" placeholder="디코딩된 API 키를 입력하세요 (예: ...==)" style="margin-bottom: 10px;" readonly>
+            
+            <button onclick="saveApiKey()">API 키 저장</button>
+            <button onclick="convertApiKey()">키 변환</button>
+            <div id="apiKeyStatus" class="result warning">인코딩된 API 키를 입력해주세요.</div>
+        </div>
+
+        <div class="test-section">
+            <h3>1. 기본 캠핑장 목록 조회</h3>
+            <button onclick="testBasicList()">기본 목록 조회</button>
+            <div id="basic-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. 지역별 검색 (강원도)</h3>
+            <button onclick="testRegionalSearch()">강원도 캠핑장 검색</button>
+            <div id="regional-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. 키워드 검색</h3>
+            <input type="text" id="keyword" placeholder="캠핑장 이름 입력" style="width: 200px;">
+            <button onclick="testKeywordSearch()">키워드 검색</button>
+            <div id="keyword-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. 상세 정보 조회</h3>
+            <input type="text" id="contentId" placeholder="Content ID 입력" style="width: 200px;">
+            <button onclick="testDetailInfo()">상세 정보 조회</button>
+            <div id="detail-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. 목 데이터 테스트</h3>
+            <button onclick="testMockData()">목 데이터 조회</button>
+            <div id="mock-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://apis.data.go.kr/B551011/GoCamping';
+        let currentApiKey = localStorage.getItem('camping_api_key') || 'wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw==';
+
+        // 페이지 로드 시 저장된 API 키 불러오기
+        window.onload = function() {
+            const apiKeyEncodedInput = document.getElementById('apiKeyEncoded');
+            const apiKeyDecodedInput = document.getElementById('apiKeyDecoded');
+            apiKeyEncodedInput.value = currentApiKey;
+            
+            // 저장된 키가 있으면 자동으로 디코딩 표시
+            if (currentApiKey) {
+                autoConvertOnInput();
+            }
+            
+            updateApiKeyStatus();
+        };
+
+        function saveApiKey() {
+            const apiKeyEncodedInput = document.getElementById('apiKeyEncoded');
+            currentApiKey = apiKeyEncodedInput.value.trim();
+            
+            if (currentApiKey) {
+                localStorage.setItem('camping_api_key', currentApiKey);
+                updateApiKeyStatus();
+            } else {
+                alert('인코딩된 API 키를 입력해주세요.');
+            }
+        }
+
+        function convertApiKey() {
+            const apiKeyEncodedInput = document.getElementById('apiKeyEncoded');
+            const apiKeyDecodedInput = document.getElementById('apiKeyDecoded');
+            
+            const encodedKey = apiKeyEncodedInput.value.trim();
+            if (encodedKey) {
+                try {
+                    // 인코딩된 키를 디코딩
+                    const decodedKey = decodeURIComponent(encodedKey);
+                    apiKeyDecodedInput.value = decodedKey;
+                    
+                    // 변환 결과를 상태에 표시
+                    const statusElement = document.getElementById('apiKeyStatus');
+                    statusElement.textContent = '✅ 키 변환 완료! 인코딩된 키가 디코딩되었습니다.';
+                    statusElement.className = 'result success';
+                    
+                    console.log('인코딩된 키:', encodedKey);
+                    console.log('디코딩된 키:', decodedKey);
+                } catch (error) {
+                    alert('키 변환 중 오류가 발생했습니다: ' + error.message);
+                    console.error('키 변환 오류:', error);
+                }
+            } else {
+                alert('인코딩된 API 키를 먼저 입력해주세요.');
+            }
+        }
+
+        // 인코딩된 키 입력 시 자동으로 디코딩 표시
+        function autoConvertOnInput() {
+            const apiKeyEncodedInput = document.getElementById('apiKeyEncoded');
+            const apiKeyDecodedInput = document.getElementById('apiKeyDecoded');
+            
+            const encodedKey = apiKeyEncodedInput.value.trim();
+            if (encodedKey && encodedKey.includes('%')) {
+                try {
+                    const decodedKey = decodeURIComponent(encodedKey);
+                    apiKeyDecodedInput.value = decodedKey;
+                } catch (error) {
+                    // 오류가 발생하면 디코딩 필드를 비움
+                    apiKeyDecodedInput.value = '';
+                }
+            }
+        }
+
+        function updateApiKeyStatus() {
+            const statusElement = document.getElementById('apiKeyStatus');
+            if (currentApiKey) {
+                statusElement.textContent = '✅ 인코딩된 API 키가 설정되었습니다.';
+                statusElement.className = 'result success';
+            } else {
+                statusElement.textContent = '⚠️ 인코딩된 API 키를 입력해주세요.';
+                statusElement.className = 'result warning';
+            }
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        async function testBasicList() {
+            if (!currentApiKey) {
+                showResult('basic-result', {
+                    success: false,
+                    error: 'API 키를 먼저 설정해주세요.'
+                }, true);
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    serviceKey: currentApiKey,
+                    numOfRows: '100',
+                    pageNo: '1',
+                    MobileOS: 'ETC',
+                    MobileApp: 'CampingFinder',
+                    _type: 'json'
+                });
+
+                const response = await fetch(`${API_BASE_URL}/basedList?${params}`);
+                const data = await response.json();
+
+                if (data.response?.header?.resultCode === '00') {
+                    showResult('basic-result', {
+                        success: true,
+                        totalCount: data.response.body.totalCount,
+                        items: data.response.body.items.item
+                    });
+                } else {
+                    showResult('basic-result', {
+                        success: false,
+                        error: data.response?.header?.resultMsg || '알 수 없는 오류',
+                        resultCode: data.response?.header?.resultCode
+                    }, true);
+                }
+            } catch (error) {
+                showResult('basic-result', {
+                    success: false,
+                    error: error.message
+                }, true);
+            }
+        }
+
+        async function testRegionalSearch() {
+            if (!currentApiKey) {
+                showResult('regional-result', {
+                    success: false,
+                    error: 'API 키를 먼저 설정해주세요.'
+                }, true);
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    serviceKey: currentApiKey,
+                    numOfRows: '50',
+                    pageNo: '1',
+                    MobileOS: 'ETC',
+                    MobileApp: 'CampingFinder',
+                    doNm: '강원도',
+                    _type: 'json'
+                });
+
+                const response = await fetch(`${API_BASE_URL}/basedList?${params}`);
+                const data = await response.json();
+
+                if (data.response?.header?.resultCode === '00') {
+                    showResult('regional-result', {
+                        success: true,
+                        region: '강원도',
+                        items: data.response.body.items.item
+                    });
+                } else {
+                    showResult('regional-result', {
+                        success: false,
+                        error: data.response?.header?.resultMsg || '알 수 없는 오류'
+                    }, true);
+                }
+            } catch (error) {
+                showResult('regional-result', {
+                    success: false,
+                    error: error.message
+                }, true);
+            }
+        }
+
+        async function testKeywordSearch() {
+            if (!currentApiKey) {
+                showResult('keyword-result', {
+                    success: false,
+                    error: 'API 키를 먼저 설정해주세요.'
+                }, true);
+                return;
+            }
+
+            const keyword = document.getElementById('keyword').value;
+            if (!keyword) {
+                showResult('keyword-result', {
+                    success: false,
+                    error: '키워드를 입력해주세요'
+                }, true);
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    serviceKey: currentApiKey,
+                    numOfRows: '50',
+                    pageNo: '1',
+                    MobileOS: 'ETC',
+                    MobileApp: 'CampingFinder',
+                    facltNm: keyword,
+                    _type: 'json'
+                });
+
+                const response = await fetch(`${API_BASE_URL}/basedList?${params}`);
+                const data = await response.json();
+
+                if (data.response?.header?.resultCode === '00') {
+                    showResult('keyword-result', {
+                        success: true,
+                        keyword: keyword,
+                        items: data.response.body.items.item
+                    });
+                } else {
+                    showResult('keyword-result', {
+                        success: false,
+                        error: data.response?.header?.resultMsg || '알 수 없는 오류'
+                    }, true);
+                }
+            } catch (error) {
+                showResult('keyword-result', {
+                    success: false,
+                    error: error.message
+                }, true);
+            }
+        }
+
+        async function testDetailInfo() {
+            if (!currentApiKey) {
+                showResult('detail-result', {
+                    success: false,
+                    error: 'API 키를 먼저 설정해주세요.'
+                }, true);
+                return;
+            }
+
+            const contentId = document.getElementById('contentId').value;
+            if (!contentId) {
+                showResult('detail-result', {
+                    success: false,
+                    error: 'Content ID를 입력해주세요'
+                }, true);
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    serviceKey: currentApiKey,
+                    contentId: contentId,
+                    MobileOS: 'ETC',
+                    MobileApp: 'CampingFinder',
+                    _type: 'json'
+                });
+
+                const response = await fetch(`${API_BASE_URL}/detailList?${params}`);
+                const data = await response.json();
+
+                if (data.response?.header?.resultCode === '00') {
+                    showResult('detail-result', {
+                        success: true,
+                        contentId: contentId,
+                        item: data.response.body.items.item
+                    });
+                } else {
+                    showResult('detail-result', {
+                        success: false,
+                        error: data.response?.header?.resultMsg || '알 수 없는 오류'
+                    }, true);
+                }
+            } catch (error) {
+                showResult('detail-result', {
+                    success: false,
+                    error: error.message
+                }, true);
+            }
+        }
+
+        function testMockData() {
+            const mockData = [
+                {
+                    id: '1',
+                    name: '강원도 캠핑장',
+                    address: '강원도 춘천시 남산면',
+                    phone: '033-123-4567',
+                    latitude: 37.5665,
+                    longitude: 126.9780,
+                    facilities: ['electricity', 'hotWater', 'shower', 'toilet'],
+                    price: { type: 'paid', amount: 30000 },
+                    reservation: { available: true, method: '온라인 예약' },
+                    images: ['https://via.placeholder.com/300x200?text=Camping+1'],
+                    description: '아름다운 자연 속에서 즐기는 캠핑',
+                    operatingHours: '24시간',
+                    lastUpdated: new Date()
+                },
+                {
+                    id: '2',
+                    name: '경기도 캠핑장',
+                    address: '경기도 가평군 청평면',
+                    phone: '031-987-6543',
+                    latitude: 37.7749,
+                    longitude: 127.4194,
+                    facilities: ['electricity', 'toilet', 'parking'],
+                    price: { type: 'free' },
+                    reservation: { available: false, method: '예약 불가' },
+                    images: ['https://via.placeholder.com/300x200?text=Camping+2'],
+                    description: '무료로 이용 가능한 캠핑장',
+                    operatingHours: '24시간',
+                    lastUpdated: new Date()
+                }
+            ];
+
+            showResult('mock-result', {
+                success: true,
+                message: '목 데이터 조회 성공',
+                items: mockData
+            });
+        }
+    </script>
+</body>
+</html> 

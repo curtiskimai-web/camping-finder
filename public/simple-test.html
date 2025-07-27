@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 키 변환 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 API 키 변환 테스트</h1>
+        
+        <h3>1. 인코딩된 키 입력</h3>
+        <input type="text" id="encodedKey" placeholder="인코딩된 API 키를 입력하세요" 
+               value="wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw%3D%3D">
+        
+        <button onclick="convertKey()">키 변환</button>
+        <button onclick="testAutoConvert()">자동 변환 테스트</button>
+        
+        <h3>2. 디코딩된 키 결과</h3>
+        <input type="text" id="decodedKey" placeholder="디코딩된 키가 여기에 표시됩니다" readonly>
+        
+        <h3>3. 변환 결과</h3>
+        <div id="result" class="result"></div>
+        
+        <h3>4. 콘솔 로그</h3>
+        <div id="consoleLog" class="result" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const consoleLog = document.getElementById('consoleLog');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleLog.innerHTML += `[${timestamp}] ${message}<br>`;
+            console.log(message);
+        }
+
+        function convertKey() {
+            const encodedKey = document.getElementById('encodedKey').value.trim();
+            const decodedKeyInput = document.getElementById('decodedKey');
+            const resultDiv = document.getElementById('result');
+            
+            log('=== 키 변환 시작 ===');
+            log(`입력된 인코딩 키: ${encodedKey}`);
+            
+            if (!encodedKey) {
+                resultDiv.textContent = '❌ 인코딩된 키를 입력해주세요.';
+                resultDiv.className = 'result error';
+                return;
+            }
+            
+            try {
+                // 인코딩된 키를 디코딩
+                const decodedKey = decodeURIComponent(encodedKey);
+                decodedKeyInput.value = decodedKey;
+                
+                log(`변환된 디코딩 키: ${decodedKey}`);
+                
+                resultDiv.textContent = '✅ 키 변환 성공!';
+                resultDiv.className = 'result success';
+                
+                // 추가 검증
+                const reEncoded = encodeURIComponent(decodedKey);
+                log(`재인코딩 결과: ${reEncoded}`);
+                log(`원본과 일치: ${reEncoded === encodedKey ? '✅ 예' : '❌ 아니오'}`);
+                
+            } catch (error) {
+                log(`❌ 변환 오류: ${error.message}`);
+                resultDiv.textContent = `❌ 변환 오류: ${error.message}`;
+                resultDiv.className = 'result error';
+                decodedKeyInput.value = '';
+            }
+        }
+
+        function testAutoConvert() {
+            log('=== 자동 변환 테스트 ===');
+            
+            const encodedKey = document.getElementById('encodedKey').value.trim();
+            if (encodedKey && encodedKey.includes('%')) {
+                try {
+                    const decodedKey = decodeURIComponent(encodedKey);
+                    document.getElementById('decodedKey').value = decodedKey;
+                    log('✅ 자동 변환 성공');
+                } catch (error) {
+                    log(`❌ 자동 변환 실패: ${error.message}`);
+                }
+            } else {
+                log('⚠️ 인코딩된 키가 아니거나 % 문자가 없습니다.');
+            }
+        }
+
+        // 페이지 로드 시 자동 변환 테스트
+        window.onload = function() {
+            log('페이지 로드됨');
+            testAutoConvert();
+        };
+    </script>
+</body>
+</html> 

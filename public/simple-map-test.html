@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 카카오맵 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        #map {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ 간단한 카카오맵 테스트</h1>
+        
+        <div id="status" class="status info">
+            카카오맵 로드 중...
+        </div>
+        
+        <div id="map"></div>
+        
+        <div style="margin-top: 20px;">
+            <h3>테스트 정보:</h3>
+            <ul>
+                <li>API 키: cd4bb7aa4dd7ae8e472e469aa942ae7d</li>
+                <li>도메인: localhost:3005</li>
+                <li>브라우저: <span id="browserInfo"></span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 카카오맵 API 직접 로드 -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=cd4bb7aa4dd7ae8e472e469aa942ae7d"></script>
+    
+    <script>
+        // 브라우저 정보 표시
+        document.getElementById('browserInfo').textContent = navigator.userAgent;
+        
+        // 상태 업데이트 함수
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // 카카오맵 초기화
+        function initMap() {
+            try {
+                updateStatus('카카오맵 API 로드 성공! 지도 초기화 중...', 'success');
+                
+                const container = document.getElementById('map');
+                const options = {
+                    center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울
+                    level: 8
+                };
+                
+                const map = new kakao.maps.Map(container, options);
+                
+                // 마커 추가
+                const marker = new kakao.maps.Marker({
+                    position: new kakao.maps.LatLng(37.5665, 126.9780)
+                });
+                marker.setMap(map);
+                
+                updateStatus('지도 초기화 완료! 서울 시청에 마커가 표시됩니다.', 'success');
+                
+                console.log('카카오맵 초기화 성공!');
+                console.log('kakao 객체:', window.kakao);
+                console.log('kakao.maps 객체:', window.kakao.maps);
+                
+            } catch (error) {
+                updateStatus(`지도 초기화 실패: ${error.message}`, 'error');
+                console.error('카카오맵 초기화 오류:', error);
+            }
+        }
+        
+        // 페이지 로드 시 카카오맵 초기화
+        window.onload = function() {
+            updateStatus('페이지 로드 완료. 카카오맵 API 확인 중...', 'info');
+            
+            // 카카오맵 API 로드 확인
+            if (typeof kakao !== 'undefined' && kakao.maps) {
+                updateStatus('카카오맵 API 로드 확인됨. 지도 초기화 시작...', 'success');
+                initMap();
+            } else {
+                updateStatus('카카오맵 API를 찾을 수 없습니다. API 키와 도메인 설정을 확인해주세요.', 'error');
+                console.error('카카오맵 API 로드 실패');
+                console.log('window.kakao:', window.kakao);
+            }
+        };
+        
+        // 카카오맵 API 로드 실패 시 처리
+        window.addEventListener('error', function(e) {
+            if (e.target.src && e.target.src.includes('kakao')) {
+                updateStatus('카카오맵 API 스크립트 로드 실패. 네트워크 연결과 API 키를 확인해주세요.', 'error');
+                console.error('카카오맵 스크립트 로드 오류:', e);
+            }
+        });
+    </script>
+</body>
+</html> 
