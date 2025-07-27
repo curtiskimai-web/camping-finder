@@ -10,10 +10,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { serviceKey, numOfRows, pageNo, MobileOS, MobileApp, _type, doNm, sigunguNm } = req.query;
+    const { serviceKey, numOfRows, pageNo, MobileOS, MobileApp, _type, doNm, sigunguNm, contentId } = req.query;
+    
+    // 엔드포인트 결정 (contentId가 있으면 detailList, 없으면 basedList)
+    const endpoint = contentId ? 'detailList' : 'basedList';
     
     // 공공데이터 포털 API URL 구성
-    const apiUrl = new URL('http://apis.data.go.kr/B551011/GoCamping/basedList');
+    const apiUrl = new URL(`http://apis.data.go.kr/B551011/GoCamping/${endpoint}`);
     apiUrl.searchParams.set('serviceKey', serviceKey);
     apiUrl.searchParams.set('numOfRows', numOfRows || '10000');
     apiUrl.searchParams.set('pageNo', pageNo || '1');
@@ -23,6 +26,7 @@ export default async function handler(req, res) {
     
     if (doNm) apiUrl.searchParams.set('doNm', doNm);
     if (sigunguNm) apiUrl.searchParams.set('sigunguNm', sigunguNm);
+    if (contentId) apiUrl.searchParams.set('contentId', contentId);
 
     console.log('프록시 API 호출:', apiUrl.toString());
 

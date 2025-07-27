@@ -52,7 +52,7 @@ class CampingApiService {
       
       console.log('최종 파라미터:', params.toString());
 
-      const url = `${this.baseUrl}/basedList?${params}`;
+      const url = `${this.baseUrl}?${params}`;
       console.log('요청 URL:', url);
       
       const response = await fetch(url);
@@ -109,7 +109,7 @@ class CampingApiService {
         console.log('전체 개수 조회 - 시군구 이름 추가:', filter.sigunguName);
       }
 
-      const response = await fetch(`${this.baseUrl}/basedList?${params}`);
+      const response = await fetch(`${this.baseUrl}?${params}`);
       const data = await response.json();
       
       console.log('전체 개수 조회 응답:', data);
@@ -138,7 +138,7 @@ class CampingApiService {
         _type: 'json'
       });
 
-      const response = await fetch(`${this.baseUrl}/detailList?${params}`);
+      const response = await fetch(`${this.baseUrl}?${params}`);
       const data = await response.json();
 
       if (data.response?.header?.resultCode === '0000') {
