@@ -1,7 +1,7 @@
 import { CampingSpot, SearchFilter, ApiResponse } from '../types/camping';
 
-// 공공데이터 포털 API 설정
-const API_BASE_URL = 'https://apis.data.go.kr/B551011/GoCamping';
+// Vercel API Routes 사용 (프록시)
+const API_BASE_URL = '/api/camping';
 // 디코딩된 키 사용 (테스트 결과 동작 확인됨)
 const API_KEY = import.meta.env.VITE_CAMPING_API_KEY || 'wGe6JiB70SrZJGSyox1BxgjxraEm0XTQ9WpgAwTFLsCLBcb3De2jkdfKaTVuKAFWcVGhOX8m20z8Mk6NR74Pnw==';
 
