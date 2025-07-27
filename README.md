@@ -1,32 +1,31 @@
 # 🏕️ Camping Finder
 
-공공데이터 포털 API를 활용한 실시간 캠핑장 조회 웹사이트입니다.
+한국의 캠핑장을 찾고 지도에서 확인할 수 있는 React 웹 애플리케이션입니다.
 
 ## ✨ 주요 기능
 
-- **실시간 캠핑장 조회**: 공공데이터 포털 API 연동
-- **지역별 검색**: 시/도, 시/군/구별 필터링
-- **시설 필터**: 전기, 온수, 샤워장, 화장실 등 시설별 검색
-- **가격대 필터**: 무료/유료 캠핑장 구분
-- **지도 연동**: 카카오맵을 통한 위치 확인
-- **상세 정보**: 캠핑장별 상세 정보 및 예약 상태
-- **반응형 디자인**: 모바일/데스크톱 최적화
+- **자동 데이터 로딩**: 페이지 로드 시 자동으로 캠핑장 데이터 로드
+- **지역별 검색**: 도/시군구별 캠핑장 필터링
+- **고정 헤더 테이블**: 스크롤 시 헤더가 고정된 테이블 뷰
+- **정렬 기능**: 캠핑장명, 거리순 정렬
+- **페이지네이션**: 100개씩 페이지 분할
+- **지도 연동**: OpenStreetMap을 사용한 인터랙티브 지도
+- **현재 위치**: 사용자의 현재 위치 표시 및 거리 계산
+- **경로 표시**: 현재 위치에서 선택된 캠핑장까지의 경로
 
 ## 🛠️ 기술 스택
 
 - **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Styled Components
-- **Routing**: React Router DOM
-- **HTTP Client**: Axios
-- **Map API**: Kakao Map API
-- **Data API**: 공공데이터 포털 캠핑장 API
+- **스타일링**: Styled Components
+- **빌드 도구**: Vite
+- **지도**: OpenStreetMap + Leaflet
+- **API**: 공공데이터 포털 (한국관광공사 고캠핑 API)
 
-## 🚀 시작하기
+## 🚀 설치 및 실행
 
-### 1. 프로젝트 클론
+### 1. 저장소 클론
 ```bash
-git clone <repository-url>
+git clone https://github.com/YOUR_USERNAME/camping-finder.git
 cd camping-finder
 ```
 
@@ -36,14 +35,9 @@ npm install
 ```
 
 ### 3. 환경 변수 설정
-```bash
-cp env.example .env
-```
-
-`.env` 파일을 편집하여 API 키를 설정하세요:
+`.env` 파일을 생성하고 API 키를 설정하세요:
 ```env
-VITE_CAMPING_API_KEY=your_public_data_api_key_here
-VITE_KAKAO_MAP_API_KEY=your_kakao_map_api_key_here
+VITE_CAMPING_API_KEY=your_api_key_here
 ```
 
 ### 4. 개발 서버 실행
@@ -53,67 +47,74 @@ npm run dev
 
 브라우저에서 `http://localhost:3000`으로 접속하세요.
 
-## 📋 API 키 발급 방법
+## 📊 API 키 발급
 
-### 공공데이터 포털 API 키
-1. [공공데이터 포털](https://www.data.go.kr/) 접속
-2. 회원가입 및 로그인
-3. "캠핑장 정보" API 검색
-4. API 신청 및 승인 대기
-5. 승인 후 발급받은 키를 `.env` 파일에 설정
+1. [공공데이터 포털](https://www.data.go.kr/)에 가입
+2. "한국관광공사 고캠핑 API" 검색
+3. API 신청 및 승인 대기
+4. 승인 후 서비스 키 발급
+5. 디코딩된 키를 `.env` 파일에 설정
 
-### 카카오맵 API 키
-1. [Kakao Developers](https://developers.kakao.com/) 접속
-2. 애플리케이션 생성
-3. JavaScript 키 발급
-4. 발급받은 키를 `.env` 파일에 설정
+## 🎯 사용법
+
+1. **페이지 접속**: 자동으로 캠핑장 데이터가 로드됩니다
+2. **지역 선택**: 도/시군구 드롭다운에서 원하는 지역 선택
+3. **캠핑장 선택**: 테이블에서 원하는 캠핑장 클릭
+4. **지도 확인**: 우측 지도에서 캠핑장 위치와 경로 확인
+5. **정렬**: 테이블 헤더 클릭으로 정렬 변경
 
 ## 📁 프로젝트 구조
 
 ```
-src/
-├── components/          # 재사용 가능한 컴포넌트
-│   ├── Header.tsx      # 헤더 컴포넌트
-│   ├── SearchFilter.tsx # 검색 필터 컴포넌트
-│   ├── CampingList.tsx # 캠핑장 리스트 컴포넌트
-│   ├── CampingCard.tsx # 캠핑장 카드 컴포넌트
-│   └── Map.tsx         # 지도 컴포넌트
-├── pages/              # 페이지 컴포넌트
-│   ├── HomePage.tsx    # 홈페이지
-│   └── DetailPage.tsx  # 상세페이지
-├── services/           # API 서비스
-│   └── campingApi.ts   # 캠핑장 API 서비스
-├── types/              # TypeScript 타입 정의
-│   └── camping.ts      # 캠핑장 관련 타입
-├── utils/              # 유틸리티 함수
-├── styles/             # 스타일 파일
-├── App.tsx             # 메인 앱 컴포넌트
-└── main.tsx            # 앱 진입점
+camping-finder/
+├── src/
+│   ├── components/
+│   │   ├── CampingList.tsx      # 캠핑장 목록 테이블
+│   │   ├── Map.tsx              # 지도 컴포넌트
+│   │   ├── SearchFilter.tsx     # 검색 필터
+│   │   └── Header.tsx           # 헤더
+│   ├── services/
+│   │   └── campingApi.ts        # API 서비스
+│   ├── types/
+│   │   └── camping.ts           # 타입 정의
+│   ├── utils/
+│   │   └── distance.ts          # 거리 계산 유틸리티
+│   ├── App.tsx                  # 메인 앱 컴포넌트
+│   └── main.tsx                 # 앱 진입점
+├── docs/
+│   └── CHECKPOINT_2024_01_04.md # 프로젝트 상태 문서
+├── .env                         # 환경 변수
+└── README.md                    # 프로젝트 설명
 ```
 
-## 🔧 빌드 및 배포
+## 🎨 주요 컴포넌트
 
-### 프로덕션 빌드
-```bash
-npm run build
-```
+### CampingList.tsx
+- 고정 헤더 테이블
+- 페이지네이션
+- 정렬 기능
+- 거리 표시
 
-### 빌드 결과 미리보기
-```bash
-npm run preview
-```
+### Map.tsx
+- OpenStreetMap 렌더링
+- 현재 위치 감지
+- 마커 관리
+- 경로 그리기
 
-## 📱 주요 화면
+### SearchFilter.tsx
+- 도/시군구 선택
+- 동적 필터 옵션
+- 실시간 필터링
 
-### 홈페이지
-- 좌측: 검색 필터 + 캠핑장 리스트
-- 우측: 카카오맵 (캠핑장 위치 표시)
+## 🔧 개발 환경
 
-### 상세페이지
-- 캠핑장 기본 정보
-- 시설 정보
-- 이용 안내
-- 예약 정보
+- **Node.js**: 16.x 이상
+- **npm**: 8.x 이상
+- **브라우저**: Chrome, Firefox, Safari, Edge
+
+## 📝 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.
 
 ## 🤝 기여하기
 
@@ -123,10 +124,10 @@ npm run preview
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
-
 ## 📞 문의
 
-프로젝트에 대한 문의사항이 있으시면 이슈를 생성해 주세요. 
+프로젝트에 대한 문의사항이 있으시면 이슈를 생성해주세요.
+
+---
+
+**Camping Finder** - 한국의 캠핑장을 쉽게 찾아보세요! 🏕️✨ 
